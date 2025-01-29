@@ -1,5 +1,10 @@
 import { useForm, Resolver } from "react-hook-form";
 import { useEffect, useState } from "react";
+import * as React from 'react';
+import Box from '@mui/material/Box';
+import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import Button from "@mui/material/Button";
+import { useNavigate } from "react-router-dom";
 
 async function deleteProject(id: string, updateProjects: (id: string) => void) {
     try {
@@ -17,17 +22,27 @@ async function deleteProject(id: string, updateProjects: (id: string) => void) {
         console.error("Erreur lors de la suppression du projet:", error);
     }
 }
-export function GetProjects() {
 
-    const [projects, setProjects] = useState([])
+export function GetProjects() {
+  const [projects, setProjects] = useState([])
 
     useEffect(() => {
         async function fetchProjects() {
             const data = await fetch("http://localhost:3000/projects")
                 .then(res => res.json())
-                console.log(data);
-                
-                setProjects(data)
+                const formattedData = data.map((project: any) => ({
+                  id: project._id,
+                  name: project.name,
+                  description: project.description,
+                  leader: project.leader?.name || "Non défini",
+                  scrumMaster: project.scrumMaster?.name || "Non défini",
+                  productOwner: project.productOwner?.name || "Non défini",
+                  participants: project.participants?.length || 0,
+                  sprints: project.sprints?.length || 0,
+                  stories: project.stories?.length || 0,
+                }));
+                setProjects(formattedData)
+            
         }
         fetchProjects();
         const interval = setInterval(fetchProjects,1000);
@@ -39,20 +54,47 @@ export function GetProjects() {
             prevProjects.filter((project: any) => project._id !== id)
         );
     };
-
-    return (
-        <>
-            <h1>Projects:</h1>
-            <ul>
-                {projects.map((project: any) => (
-                    <li key={project._id}>
-                        <b>name :</b> {project.name} / <b>description :</b> {project.description}
-                        <button onClick={() => deleteProject(project._id,handleDelete)}>Supprimer</button>
-                    </li>
-                ))}
-            </ul>
-        </>
-    );
+  const columns: GridColDef<(typeof projects)[number]>[] = [
+  { field: "id", headerName: "ID", width: 200,}, 
+  { field: "name", headerName: "Nom du Projet", width: 200 },
+  { field: "description", headerName: "Description", width: 250 },
+  { field: "leader", headerName: "Leader", width: 150 },
+  { field: "scrumMaster", headerName: "Scrum Master", width: 150 },
+  { field: "productOwner", headerName: "Product Owner", width: 150 },
+  { field: "participants", headerName: "Participants", width: 150 },
+  { field: "sprints", headerName: "Nombre de Sprints", width: 150 },
+  { field: "stories", headerName: "Nombre de Stories", width: 150 },
+  {field: "delete", headerName: "Supprimer", width: 150,    renderCell: (params) => (
+    <Button
+      variant="contained"
+      color="error"
+      onClick={() => deleteProject((params.row as any).id,handleDelete)}
+    >
+      Supprimer
+    </Button>)}
+];
+  
+  return (
+    <Box sx={{ height: 400, width: '100%' }}>
+      <DataGrid
+        columnVisibilityModel={{
+          id: false,
+        }}
+        rows={projects}
+        columns={columns}
+        initialState={{
+          pagination: {
+            paginationModel: {
+              pageSize: 5,
+            },
+          },
+        }}
+        pageSizeOptions={[5]}
+        checkboxSelection
+        disableRowSelectionOnClick
+      />
+    </Box>
+  );
 }
 
 type FormValues = {
@@ -99,12 +141,15 @@ export function CreateProject() {
       if (!response.ok) {
         throw new Error("erreur lors de l'envoi");
       }
+      const navigate = useNavigate();
+      navigate('/getProjects');
       const result = await response.json();
       console.log("Données envoyé:", result);
     } catch (error) {
       console.error("erreur lors de l'envoi:", error);
     }
   };
+
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>

@@ -1,3 +1,5 @@
+import { Box, Button } from "@mui/material";
+import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import { useEffect, useState } from "react";
 import { useForm, Resolver } from "react-hook-form";
 
@@ -10,27 +12,58 @@ export function BackUsers() {
         async function fetchUsers() {
             const data = await fetch("http://localhost:3000/users")
                 .then(res => res.json())
-                console.log(data);
+            const formattedData = data.map((user: any) => ({
+              id: user._id,
+              name: user.name,
+              email: user.email,
+              password: "******", 
+              accessTokens: user.accessTokens,
+              refreshTokens: user.refreshTokens,
+              roles: user.roles, 
+      }));
                 
-            setUsers(data)
+            setUsers(formattedData)
         }
         fetchUsers();
         const interval = setInterval(fetchUsers,1000);
         return () => clearInterval(interval);
     }, [])
 
-    return (
-        <>
-            <h1>BackUsers:</h1>
-            <ul>
-                {users.map((user: any) => (
-                    <li key={user._id}>
-                        {user.name} {user.email}
-                    </li>
-                ))}
-            </ul>
-        </>
-    );
+    const columns: GridColDef<(typeof users)[number]>[] = [
+      { field: "id", headerName: "ID", width: 200,}, 
+      { field: "name", headerName: "Nom", width: 200 },
+      { field: "email", headerName: "Email", width: 250 },
+      { field: "password", headerName: "MDP", width: 250 },
+      { field: "accessToken", headerName: "Token d'acces", width: 250 },
+      { field: "refreshToken", headerName: "Token de rafraichissement", width: 250 },
+      { field: "roles", headerName: "Roles", width: 250 },
+    ];
+      
+      return (
+        <Box sx={{ height: 400, width: '100%' }}>
+          <DataGrid
+            columnVisibilityModel={{
+              id: false,
+              password:false,
+              accessToken:false,
+              refreshToken:false,
+              roles:false,
+            }}
+            rows={users}
+            columns={columns}
+            initialState={{
+              pagination: {
+                paginationModel: {
+                  pageSize: 5,
+                },
+              },
+            }}
+            pageSizeOptions={[5]}
+            checkboxSelection
+            disableRowSelectionOnClick
+          />
+        </Box>
+      );
 }
 type FormValues = {
   email: string;

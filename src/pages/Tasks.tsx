@@ -1,5 +1,7 @@
 import { useForm, Resolver } from "react-hook-form";
 import { useEffect, useState } from "react";
+import { Box, Button } from "@mui/material";
+import { DataGrid, GridColDef } from "@mui/x-data-grid";
 
 async function deleteTask (id: string, updateTasks: (id: string) => void) {
     try {
@@ -25,9 +27,14 @@ export function GetTasks() {
         async function fetchTasks() {
             const data = await fetch("http://localhost:3000/tasks")
                 .then(res => res.json())
-                console.log(data);
+                const formattedData = data.map((task: any) => ({
+                  id: task._id,
+                  name: task.name,
+                  done: task.done ? "Fait" : "A Faire",
+                  tasks: task.tasks.length,
+                }));
                 
-                setTasks(data)
+                setTasks(formattedData)
         }
         fetchTasks();
         const interval = setInterval(fetchTasks,1000);
@@ -39,19 +46,43 @@ export function GetTasks() {
         );
     };
 
-    return (
-        <>
-            <h1>Tasks:</h1>
-            <ul>
-                {tasks.map((task: any) => (
-                    <li key={task._id}>
-                        {task.name}
-                        <button onClick={() => deleteTask(task._id,handleDelete)}>Supprimer</button>
-                    </li>
-                ))}
-            </ul>
-        </>
-    );
+    const columns: GridColDef<(typeof tasks)[number]>[] = [
+      { field: "id", headerName: "ID", width: 200,}, 
+      { field: "name", headerName: "Nom", width: 200 },
+      { field: "done", headerName: "Statut", width: 250 },
+      { field: "tasks", headerName: "Taches", width: 250 },
+      {field: "delete", headerName: "Supprimer", width: 150,    renderCell: (params) => (
+        <Button
+          variant="contained"
+          color="error"
+          onClick={() => deleteTask((params.row as any).id,handleDelete)}
+        >
+          Supprimer
+        </Button>)}
+    ];
+      
+      return (
+        <Box sx={{ height: 400, width: '100%' }}>
+          <DataGrid
+            columnVisibilityModel={{
+              id: false,
+              tasks:false,
+            }}
+            rows={tasks}
+            columns={columns}
+            initialState={{
+              pagination: {
+                paginationModel: {
+                  pageSize: 5,
+                },
+              },
+            }}
+            pageSizeOptions={[5]}
+            checkboxSelection
+            disableRowSelectionOnClick
+          />
+        </Box>
+      );
 }
 type FormValues = {
   name: string;

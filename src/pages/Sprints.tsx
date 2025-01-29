@@ -1,5 +1,8 @@
 import { useForm, Resolver } from "react-hook-form";
 import { useEffect, useState } from "react";
+import Button from "@mui/material/Button";
+import Box from "@mui/material/Box";
+import { DataGrid, GridColDef } from "@mui/x-data-grid";
 
 async function deleteSprint (id: string, updateSprints: (id: string) => void) {
     try {
@@ -25,9 +28,13 @@ export function GetSprints() {
         async function fetchSprints() {
             const data = await fetch("http://localhost:3000/sprints")
                 .then(res => res.json())
-                console.log(data);
+                const formattedData = data.map((sprint: any) => ({
+                  id: sprint._id,
+                  startDate: sprint.startDate,
+                  endDate: sprint.endDate,
+                }));
                 
-                setSprints(data)
+                setSprints(formattedData)
         }
         fetchSprints();
         const interval = setInterval(fetchSprints,1000);
@@ -40,19 +47,41 @@ export function GetSprints() {
         );
     };
 
-    return (
-        <>
-            <h1>Projects:</h1>
-            <ul>
-                {sprints.map((sprint: any) => (
-                    <li key={sprint._id}>
-                        {sprint.startDate}-{sprint.endDate}
-                        <button onClick={() => deleteSprint(sprint._id,handleDelete)}>Supprimer</button>
-                    </li>
-                ))}
-            </ul>
-        </>
-    );
+    const columns: GridColDef<(typeof sprints)[number]>[] = [
+      { field: "id", headerName: "ID", width: 200,}, 
+      { field: "startDate", headerName: "Debut du sprint", width: 200 },
+      { field: "endDate", headerName: "Fin du sprint", width: 250 },
+      {field: "delete", headerName: "Supprimer", width: 150,    renderCell: (params) => (
+        <Button
+          variant="contained"
+          color="error"
+          onClick={() => deleteSprint((params.row as any).id,handleDelete)}
+        >
+          Supprimer
+        </Button>)}
+    ];
+      
+      return (
+        <Box sx={{ height: 400, width: '100%' }}>
+          <DataGrid
+            columnVisibilityModel={{
+              id: false,
+            }}
+            rows={sprints}
+            columns={columns}
+            initialState={{
+              pagination: {
+                paginationModel: {
+                  pageSize: 5,
+                },
+              },
+            }}
+            pageSizeOptions={[5]}
+            checkboxSelection
+            disableRowSelectionOnClick
+          />
+        </Box>
+      );
 }
 
 type FormValues = {

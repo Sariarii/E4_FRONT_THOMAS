@@ -1,7 +1,7 @@
 import { createBrowserRouter, Link, RouterProvider } from "react-router-dom";
 import "./App.css";
-import  {GetProjects,CreateProject}  from "./pages/Projects";
-import { Home } from "./pages/Home";
+import  {CreateProject,GetProjects}  from "./pages/Projects";
+import { BasicMenu } from "./pages/Home";
 import  {GetSprints,CreateSprint}  from "./pages/Sprints";
 import { BackUsers, CreateUser } from "./pages/BackUsers";
 import {CreateTask,GetTasks} from "./pages/Tasks";
@@ -12,7 +12,7 @@ function App() {
   const router = createBrowserRouter([
     {
       path: "/",
-      element: <Home/>,
+      element: <BasicMenu/>,
       errorElement:(
         <div id="error-page">
           <h1>Oops!</h1>
